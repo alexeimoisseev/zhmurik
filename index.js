@@ -1,6 +1,19 @@
 'use strict';
-function decorator(requestModule, trigger) {
+function decorator(requestModule, _trigger) {
+
     var oldRequest = requestModule.request;
+    var listeners = [];
+
+    function trigger() {
+        var args = arguments;
+        listeners.forEach(function (listener) {
+            setTimeout(function() {
+                listener.apply(listener, args);
+            }, 0);
+        });
+        return _trigger.apply(_trigger, args);
+    }
+
     function end(options, timers, err, res) {
         timers.total = Math.round(timers.end - timers.socket);
         trigger({
@@ -9,6 +22,7 @@ function decorator(requestModule, trigger) {
             options: options
         });
     }
+
     function request(options, callback) {
         var timers = {
             start: Date.now()
@@ -42,7 +56,12 @@ function decorator(requestModule, trigger) {
         });
         return req;
     }
+
     requestModule.request = request;
+
+    return function (listener) {
+        listeners.push(listener);
+    }
 }
 
 function getCode(error) {

@@ -1,8 +1,12 @@
 const http = require('http');
 const https = require('https');
-const zhmurik = require('../index');
-zhmurik(http, function (result) {
+const Zhmurik = require('../index');
+const addListener = Zhmurik(http, function (result) {
     console.log(result);
+});
+
+addListener(function (result) {
+    console.log('from listener', result);
 });
 
 var request = http.request({
