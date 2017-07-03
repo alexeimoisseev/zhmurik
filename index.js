@@ -28,7 +28,11 @@ function decorator(requestModule, trigger) {
                     code: 503
                 });
             });
-            return callback(res);
+            
+            if (typeof callback === 'function') {
+                return callback(res);
+            }
+            return res;
         });
         req.on('socket', function () {
             timers.socket = Date.now();
