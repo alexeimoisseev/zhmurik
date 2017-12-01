@@ -1,8 +1,16 @@
 const http = require('http');
 const https = require('https');
 const zhmurik = require('../index');
-zhmurik(http, function (result) {
-    console.log(result);
+
+zhmurik(http, {
+    onRequestEnd: (result) => {
+        console.log('http wrapper', result);
+    }
+});
+zhmurik(https, {
+    onRequestEnd: (result) => {
+        console.log('https wrapper', result);
+    }
 });
 
 var request = http.request({
