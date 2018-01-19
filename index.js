@@ -1,19 +1,28 @@
 'use strict';
-function decorator(requestModule, trigger) {
-    var oldRequest = requestModule.request;
+
+function decorator(requestModule, callbacks = {}) {
+    const oldRequest = requestModule.request;
     function end(options, timers, err, res) {
-        timers.total = Math.round(timers.end - timers.socket);
-        trigger({
-            timers: timers,
-            code: err ? getCode(err.code) : res.statusCode,
-            options: options
-        });
+        const onRequestEnd = callbacks.onRequestEnd;
+        if (typeof onRequestEnd === 'function') {
+            timers.total = Math.round(timers.end - timers.socket);
+            onRequestEnd({
+                timers: timers,
+                code: err ? getCode(err.code) : res.statusCode,
+                options: options
+            });
+        }
     }
     function request(options, callback) {
-        var timers = {
+        const onRequestStart = callbacks.onRequestStart;
+        if (typeof onRequestStart === 'function') {
+            onRequestStart(options);
+        }
+
+        const timers = {
             start: Date.now()
         };
-        var req = oldRequest(options, function (res) {
+        const req = oldRequest(options, function (res) {
             timers.ttfb = Date.now();
             res.on('data', function () {
                 // this needs to set end handler
@@ -22,7 +31,7 @@ function decorator(requestModule, trigger) {
                 timers.end = Date.now();
                 end(options, timers, null, res);
             });
-            res.on('close', function (err) {
+            res.on('close', function () {
                 timers.end = Date.now();
                 end(options, timers, {
                     code: 503
