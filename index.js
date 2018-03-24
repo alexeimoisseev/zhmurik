@@ -2,14 +2,16 @@
 
 function decorator(requestModule, callbacks = {}) {
     const oldRequest = requestModule.request;
-    function end(options, timers, err, res) {
+    function end(options, timers, err, req, res) {
         const onRequestEnd = callbacks.onRequestEnd;
         if (typeof onRequestEnd === 'function') {
             timers.total = Math.round(timers.end - timers.socket);
             onRequestEnd({
                 timers: timers,
                 code: err ? getCode(err.code) : res.statusCode,
-                options: options
+                options: options,
+                req: req,
+                res: res
             });
         }
     }
@@ -29,15 +31,13 @@ function decorator(requestModule, callbacks = {}) {
             });
             res.on('end', function () {
                 timers.end = Date.now();
-                end(options, timers, null, res);
+                end(options, timers, null, req, res);
             });
             res.on('close', function () {
                 timers.end = Date.now();
-                end(options, timers, {
-                    code: 503
-                });
+                end(options, timers, {code: 503}, req, res);
             });
-            
+
             if (typeof callback === 'function') {
                 return callback(res);
             }
@@ -51,7 +51,7 @@ function decorator(requestModule, callbacks = {}) {
         });
         req.on('error', function (err) {
             timers.end = Date.now();
-            end(options, timers, err);
+            end(options, timers, err, req, null);
         });
         return req;
     }
