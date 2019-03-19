@@ -33,10 +33,6 @@ function decorator(requestModule, callbacks = {}) {
                 timers.end = Date.now();
                 end(options, timers, null, req, res);
             });
-            res.on('close', function () {
-                timers.end = Date.now();
-                end(options, timers, {code: 503}, req, res);
-            });
 
             if (typeof callback === 'function') {
                 return callback(res);
